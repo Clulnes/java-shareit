@@ -6,6 +6,7 @@ import ru.practicum.shareit.user.User;
 
 public class ItemMapper {
     public static ItemDto toItemDto(Item item) {
+
         if (item == null) {
             return null;
         }
@@ -23,6 +24,7 @@ public class ItemMapper {
     }
 
     public static Item toItem(ItemDto itemDto, User owner) {
+
         if(itemDto == null) {
             return null;
         }
