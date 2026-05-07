@@ -86,13 +86,11 @@ public class ItemServiceImpl implements ItemService {
         if (item.getOwner().getId().equals(userId)) {
             LocalDateTime created = LocalDateTime.now();
 
-            bookingRepository.findFirstByItemIdAndStartLessThanEqualAndStatusOrderByStartDesc(itemId, created,
-                    Status.APPROVED)
+            bookingRepository.findFirstPreviousBooking(itemId, created, Status.APPROVED)
                     .ifPresent(last -> itemDto.setLastBooking(new ItemDto.BookingShortDto(last.getId(),
                             last.getBooker().getId())));
 
-            bookingRepository.findFirstByItemIdAndStartGreaterThanEqualAndStatusOrderByStartDesc(itemId, created,
-                    Status.APPROVED)
+            bookingRepository.findFirstNextBooking(itemId, created, Status.APPROVED)
                     .ifPresent(next -> itemDto.setNextBooking(new ItemDto.BookingShortDto(next.getId(),
                             next.getBooker().getId())));
         }
@@ -113,13 +111,11 @@ public class ItemServiceImpl implements ItemService {
                     if (item.getOwner().getId().equals(userId)) {
                         LocalDateTime created = LocalDateTime.now();
 
-                        bookingRepository.findFirstByItemIdAndStartLessThanEqualAndStatusOrderByStartDesc(item.getId(),
-                                        created, Status.APPROVED)
+                        bookingRepository.findFirstPreviousBooking(item.getId(), created, Status.APPROVED)
                                 .ifPresent(last -> itemDto.setLastBooking(new ItemDto
                                         .BookingShortDto(last.getId(), last.getBooker().getId())));
 
-                        bookingRepository.findFirstByItemIdAndStartGreaterThanEqualAndStatusOrderByStartDesc(item
-                                                .getId(), created, Status.APPROVED)
+                        bookingRepository.findFirstNextBooking(item.getId(), created, Status.APPROVED)
                                 .ifPresent(next -> itemDto.setNextBooking(new ItemDto.BookingShortDto(next.getId(),
                                         next.getBooker().getId())));
                     }
@@ -149,8 +145,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Предмет не найден"));
 
-        boolean isLegit = bookingRepository.existsByBookerIdAndItemIdAndEndIsBeforeAndStatus(userId, itemId,
-                LocalDateTime.now(), Status.APPROVED);
+        boolean isLegit = bookingRepository.hasCompletedBooking(userId, itemId, LocalDateTime.now(), Status.APPROVED);
 
         if (!isLegit) {
             throw new ValidationException("У вас нет доступа к отзыву, ибо вы не брали данную вещь, " +

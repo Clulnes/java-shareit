@@ -42,12 +42,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.item.owner.id = :ownerId AND b.status = :status ORDER BY b.start DESC")
     List<Booking> findBookingsByOwnerAndStatus(@Param("ownerId") Long ownerId, @Param("status") Status status);
 
-    boolean existsByBookerIdAndItemIdAndEndIsBeforeAndStatus(Long bookerId, Long  itemId,
-                                                                                   LocalDateTime now, Status status);
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking as b WHERE b.booker.id = :bookerId " +
+            "AND b.item.id = :itemId AND b.end < :now AND b.status = :status")
+    boolean hasCompletedBooking(@Param("bookerId") Long bookerId, @Param("itemId") Long  itemId,
+                                @Param("now") LocalDateTime now,
+                                @Param("status") Status status);
 
-    Optional<Booking> findFirstByItemIdAndStartLessThanEqualAndStatusOrderByStartDesc(Long itemId, LocalDateTime now,
-                                                                                      Status status);
+    @Query("SELECT b FROM Booking as b WHERE b.item.id = :itemId AND b.start <= :now AND b.status = :status " +
+            "ORDER BY b.start DESC")
+    Optional<Booking> findFirstPreviousBooking(@Param("itemId") Long itemId, @Param("now") LocalDateTime now,
+                                               @Param("status") Status status);
 
-    Optional<Booking> findFirstByItemIdAndStartGreaterThanEqualAndStatusOrderByStartDesc(Long itemId, LocalDateTime now,
-                                                                                         Status status);
+    @Query("SELECT b FROM Booking as b WHERE b.item.id = :itemId AND b.start > :now AND b.status = :status " +
+            "ORDER BY b.start ASC")
+    Optional<Booking> findFirstNextBooking(@Param("itemId") Long itemId, @Param("now") LocalDateTime now,
+                                           @Param("status") Status status);
 }
