@@ -16,7 +16,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        if (userRepository.isEmailExists(userDto.getEmail())) {
+        if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new ConflictException("Email уже существует");
         }
 
@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User не найден"));
 
         if (userDto.getEmail() != null) {
-            if (userRepository.isEmailExists(userDto.getEmail())) {
+            if (userRepository.existsByEmailAndIdNot(userDto.getEmail(), id)) {
                 throw new ConflictException("Email уже занят");
             }
 
@@ -55,13 +55,13 @@ public class UserServiceImpl implements UserService {
             existingUser.setName(userDto.getName());
         }
 
-        return UserMapper.toUserDto(userRepository.update(existingUser));
+        return UserMapper.toUserDto(userRepository.save(existingUser));
     }
 
     @Override
     public void deleteUser(Long id) {
         userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        userRepository.delete(id);
+        userRepository.deleteById(id);
     }
 }
