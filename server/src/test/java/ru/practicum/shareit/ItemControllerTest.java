@@ -10,6 +10,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.item.ItemController;
 import ru.practicum.shareit.item.ItemService;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -52,5 +54,38 @@ public class ItemControllerTest {
     void searchItems() throws Exception {
         when(itemService.searchItems(any())).thenReturn(List.of(new ItemDto()));
         mvc.perform(get("/items/search?text=N").header("X-Sharer-User-Id", 1)).andExpect(status().isOk());
+    }
+
+    @Test
+    void updateItem() throws Exception {
+        ItemDto dto = new ItemDto(null, "Дрель", "Топ", true, null, null, null, null);
+        when(itemService.updateItem(anyLong(), anyLong(), any())).thenReturn(dto);
+
+        mvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk());
+    }
+
+    @Test
+    void getAllUserItems() throws Exception {
+        when(itemService.getItemsByUserId(anyLong())).thenReturn(List.of(new ItemDto()));
+
+        mvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", 1L))
+                        .andExpect(status().isOk());
+    }
+
+    @Test
+    void createComment() throws Exception {
+        CommentDto dto = new CommentDto(null, "Тест", null, null);
+        when(itemService.createComment(anyLong(), anyLong(), any())).thenReturn(dto);
+
+        mvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", 1L)
+                        .content(mapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk());
     }
 }
