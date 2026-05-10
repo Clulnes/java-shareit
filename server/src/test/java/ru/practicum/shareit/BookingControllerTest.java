@@ -10,7 +10,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.BookingController;
 import ru.practicum.shareit.booking.BookingService;
-import ru.practicum.shareit.booking.dto.BookItemRequestDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 
 import java.time.LocalDateTime;
@@ -59,7 +59,7 @@ class BookingControllerTest {
 
     @Test
     void createBooking_Valid_Returns200() throws Exception {
-        BookItemRequestDto dto = new BookItemRequestDto(1L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2));
+        BookingDto dto = new BookingDto(1L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2));
         when(bookingService.createBooking(anyLong(), any())).thenReturn(new BookingResponseDto());
 
         mvc.perform(post("/bookings")
