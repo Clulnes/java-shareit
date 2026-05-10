@@ -7,7 +7,10 @@ import java.util.List;
 
 public interface ItemRequestService {
     ItemRequestResponseDto createRequest(Long userId, ItemRequestDto dto);
+
     List<ItemRequestResponseDto> getUserRequests(Long userId);
+
     List<ItemRequestResponseDto> getAllRequests(Long userId);
+
     ItemRequestResponseDto getRequestById(Long userId, Long requestId);
 }
