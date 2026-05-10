@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 @Entity
@@ -37,6 +38,7 @@ public class Item {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @Column(name = "request_id")
-    private Long request;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private ItemRequest request;
 }
