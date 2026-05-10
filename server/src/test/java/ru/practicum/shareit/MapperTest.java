@@ -9,7 +9,7 @@ import ru.practicum.shareit.user.User;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class ItemMapperTest {
+class MapperTest {
     @Test
     void toItemDto_NullInput_ReturnsNull() {
         assertNull(ItemMapper.toItemDto(null));
