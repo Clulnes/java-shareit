@@ -15,10 +15,13 @@ import ru.practicum.shareit.user.dto.UserDto;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
@@ -57,5 +60,17 @@ class UserControllerTest {
     @Test
     void deleteUser() throws Exception {
         mvc.perform(delete("/users/1")).andExpect(status().isOk());
+    }
+
+    @Test
+    void updateUser() throws Exception {
+        UserDto dto = new UserDto(1L, "новое", "new@mail.com");
+        when(userService.updateUser(anyLong(), any())).thenReturn(dto);
+
+        mvc.perform(patch("/users/1")
+                        .content(mapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.name").value("новое"));
     }
 }

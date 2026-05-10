@@ -70,4 +70,13 @@ class ItemRequestControllerTest {
                         .header("X-Sharer-User-Id", 1L))
                         .andExpect(status().isOk());
     }
+
+    @Test
+    void getAllRequests() throws Exception {
+        when(itemRequestService.getAllRequests(anyLong())).thenReturn(List.of());
+
+        mvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L))
+                        .andExpect(status().isOk());
+    }
 }
