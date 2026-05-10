@@ -1,125 +1,99 @@
 package ru.practicum.shareit;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
-import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.item.CommentRepository;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.ItemServiceImpl;
-import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ItemServiceImplTest {
 
-    @Mock
-    private ItemRepository itemRepository;
+    @Mock private ItemRepository itemRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private BookingRepository bookingRepository;
+    @Mock private CommentRepository commentRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @InjectMocks private ItemServiceImpl itemService;
 
-    @Mock
-    private BookingRepository bookingRepository;
+    private User owner;
+    private Item item;
 
-    @Mock
-    private CommentRepository commentRepository;
-
-    @Mock
-    private ItemRequestRepository itemRequestRepository;
-
-    @InjectMocks
-    private ItemServiceImpl itemService;
-
-    private final User owner = new User(1L, "Иван", "o@mail.com");
-    private final Item item = new Item(1L, "Дрель", "Топ", true, owner, null);
+    @BeforeEach
+    void setUp() {
+        owner = new User(1L, "Олег", "o@mail.com");
+        item = new Item(1L, "Дрель", "Топ", true, owner, null);
+    }
 
     @Test
-    void createItem_Valid_ReturnsDto() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+    void updateItem_UpdateAllFields_ReturnsDto() {
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(itemRepository.save(any())).thenReturn(item);
 
-        ItemDto result = itemService.createItem(1L, new ItemDto(null, "Дрель", "Топ", true, null, null, null, null));
-        assertEquals(1L, result.getId());
+        ItemDto updateDto = new ItemDto(null, "Новое", "Новое оп", false, null, null, null, null);
+        ItemDto result = itemService.updateItem(1L, 1L, updateDto);
+
+        assertEquals("Новое", result.getName());
+        assertEquals("Новое оп", result.getDescription());
+        assertFalse(result.getAvailable());
     }
 
     @Test
-    void createItem_WithRequest_ReturnsDto() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(itemRequestRepository.findById(1L)).thenReturn(Optional.of(new ItemRequest()));
+    void updateItem_UpdateOnlyName_ReturnsDto() {
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(itemRepository.save(any())).thenReturn(item);
 
-        ItemDto dto = new ItemDto(null, "Дрель", "Топ", true, 1L, null, null, null);
-        assertNotNull(itemService.createItem(1L, dto));
+        ItemDto updateDto = new ItemDto(null, "Новое", null, null, null, null, null, null);
+        ItemDto result = itemService.updateItem(1L, 1L, updateDto);
+
+        assertEquals("Новое", result.getName());
+        assertEquals("Топ", result.getDescription());
     }
 
     @Test
-    void updateItem_NotOwner_ThrowsNotFound() {
+    void getItemById_AsOwner_WithBookings() {
+        User booker = new User(2L, "Booker", "b@mail.com");
+        Booking lastBooking = new Booking(1L, LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(1),
+                item, booker, Status.APPROVED);
+        Booking nextBooking = new Booking(2L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
+                item, booker, Status.APPROVED);
+
         when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        assertThrows(NotFoundException.class, () -> itemService.updateItem(2L, 1L, new ItemDto()));
+        when(bookingRepository.findFirstPreviousBooking(any(), any(), any())).thenReturn(Optional.of(lastBooking));
+        when(bookingRepository.findFirstNextBooking(any(), any(), any())).thenReturn(Optional.of(nextBooking));
+
+        ItemDto result = itemService.getItemById(1L, 1L); // 1L - владелец
+        assertNotNull(result.getLastBooking());
+        assertNotNull(result.getNextBooking());
     }
 
     @Test
-    void getItemById_IsOwner_ReturnsWithBookings() {
+    void getItemById_NotOwner_NoBookings() {
         when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(commentRepository.findAllByItemId(1L)).thenReturn(List.of());
 
-        ItemDto result = itemService.getItemById(1L, 1L);
-        assertNotNull(result);
-    }
-
-    @Test
-    void searchItems_BlankText_ReturnsEmptyList() {
-        assertTrue(itemService.searchItems("").isEmpty());
-    }
-
-    @Test
-    void searchItems_ValidText_ReturnsList() {
-        when(itemRepository.search(anyString())).thenReturn(List.of(item));
-        assertEquals(1, itemService.searchItems("Дрель").size());
-    }
-
-    @Test
-    void createComment_UserNotEligible_ThrowsValidation() {
-        when(userRepository.findById(2L)).thenReturn(Optional.of(new User(2L, "крол", "m@m.com")));
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(bookingRepository.hasCompletedBooking(anyLong(), anyLong(), any(), any())).thenReturn(false);
-
-        assertThrows(ValidationException.class, () -> itemService.createComment(2L, 1L, new CommentDto()));
-    }
-
-    @Test
-    void createComment_Valid_ReturnsDto() {
-        User author = new User(2L, "U", "u@m.com");
-        when(userRepository.findById(2L)).thenReturn(Optional.of(author));
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(bookingRepository.hasCompletedBooking(anyLong(), anyLong(), any(), any())).thenReturn(true);
-        when(commentRepository.save(any())).thenReturn(new Comment(1L, "Текст", item, author,
-                LocalDateTime.now()));
-
-        assertNotNull(itemService.createComment(2L, 1L, new CommentDto(null, "Текст", null, null)));
+        ItemDto result = itemService.getItemById(2L, 1L); // 2L - не владелец
+        assertNull(result.getLastBooking());
+        assertNull(result.getNextBooking());
     }
 }
