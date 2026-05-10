@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,5 +82,16 @@ class UserServiceImplTest {
         UserDto updateDto = new UserDto(null, "Ваня", "new@mail.ru");
         UserDto result = userService.updateUser(1L, updateDto);
         assertEquals("Ваня", result.getName());
+    }
+
+    @Test
+    void deleteUser_Valid_CallsRepositoryDelete() {
+        User user = new User(1L, "Ваня", "ivan@mail.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        userService.deleteUser(1L);
+
+        verify(userRepository, times(1)).deleteById(1L);
+
     }
 }
