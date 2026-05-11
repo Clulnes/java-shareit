@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.constants.Constants;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
@@ -22,21 +23,20 @@ import ru.practicum.shareit.item.dto.ItemDto;
 @Validated
 public class ItemController {
     private final ItemClient itemClient;
-    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     public ItemController(ItemClient itemClient) {
         this.itemClient = itemClient;
     }
 
     @PostMapping
-    public ResponseEntity<Object> createItem(@RequestHeader(USER_ID_HEADER) long userId,
+    public ResponseEntity<Object> createItem(@RequestHeader(Constants.USER_ID_HEADER) long userId,
                                              @Valid @RequestBody ItemDto itemDto) {
         log.info("Создание вещи пользователем {}", userId);
         return itemClient.createItem(userId, itemDto);
     }
 
     @PatchMapping("/{itemId}")
-    public ResponseEntity<Object> updateItem(@RequestHeader(USER_ID_HEADER) long userId,
+    public ResponseEntity<Object> updateItem(@RequestHeader(Constants.USER_ID_HEADER) long userId,
                                              @PathVariable long itemId,
                                              @RequestBody ItemDto itemDto) {
         log.info("Обновление вещи {} пользователем {}", itemId, userId);
@@ -44,27 +44,27 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<Object> getItemById(@RequestHeader(USER_ID_HEADER) long userId,
+    public ResponseEntity<Object> getItemById(@RequestHeader(Constants.USER_ID_HEADER) long userId,
                                               @PathVariable long itemId) {
         log.info("Запрос вещи {} пользователем {}", itemId, userId);
         return itemClient.getItemById(userId, itemId);
     }
 
     @GetMapping
-    public ResponseEntity<Object> getItemsByUserId(@RequestHeader(USER_ID_HEADER) long userId) {
+    public ResponseEntity<Object> getItemsByUserId(@RequestHeader(Constants.USER_ID_HEADER) long userId) {
         log.info("Запрос всех вещей пользователя {}", userId);
         return itemClient.getItemsByUserId(userId);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Object> search(@RequestHeader(USER_ID_HEADER) long userId,
+    public ResponseEntity<Object> search(@RequestHeader(Constants.USER_ID_HEADER) long userId,
                                          @RequestParam String text) {
         log.info("Поиск вещей по тексту: {}", text);
         return itemClient.search(userId, text);
     }
 
     @PostMapping("/{itemId}/comment")
-    public ResponseEntity<Object> createComment(@RequestHeader(USER_ID_HEADER) long userId,
+    public ResponseEntity<Object> createComment(@RequestHeader(Constants.USER_ID_HEADER) long userId,
                                                 @PathVariable long itemId,
                                                 @Valid @RequestBody CommentDto commentDto) {
         log.info("Создание комментария к вещи {} пользователем {}", itemId, userId);
